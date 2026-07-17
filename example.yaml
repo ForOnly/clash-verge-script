@@ -1,0 +1,245 @@
+# ====================================================================
+# Clash Verge Rev — 全局扩展 DSL 示例配置
+# ====================================================================
+# 将本文件内容粘贴到 Clash Verge Rev 的 Override Config 中，
+# 并配合 clash-verge-extension-script.js 一起使用。
+#
+# 本示例演示了所有 5 种资源类型 × 4 种操作的完整用法。
+# ====================================================================
+
+# ---- 基础配置（仅用于演示） ----
+mode: rule
+ipv6: false
+log-level: info
+
+# ---- 扩展 DSL 声明 ----
+extensions:
+
+  # ============================================================
+  # 1. rule-providers — 规则集提供者（对象类型）
+  # ============================================================
+  # 唯一标识：对象的 key（如 AI、Google）
+  # prepend / append：仅添加不存在的 key
+  # replace：覆盖已有 key 或新增
+  # remove：按 key 删除
+  # ============================================================
+  rule-providers:
+
+    prepend:
+      # 新增 AI 规则集（如果 config 中不存在）
+      AI:
+        type: http
+        behavior: classical
+        format: text
+        interval: 86400
+        path: ./ruleset/AI.list
+        url: https://cdn.jsdmirror.com/gh/Passerby1011/Garbage-dump/AI.list
+
+      # 新增 Steam 规则集（如果 config 中不存在）
+      Steam:
+        type: http
+        behavior: classical
+        format: text
+        interval: 86400
+        path: ./ruleset/Steam.list
+        url: https://example.com/steam.list
+
+    append:
+      # 追加 ── 与 prepend 行为相同（对象无顺序概念）
+      GitHub:
+        type: http
+        behavior: classical
+        format: text
+        interval: 86400
+        path: ./ruleset/GitHub.list
+        url: https://example.com/github.list
+
+    replace:
+      # 替换或新增 ── 如果已存在 Google 规则集则覆盖，否则新增
+      Google:
+        type: http
+        behavior: classical
+        format: text
+        interval: 43200
+        path: ./ruleset/Google.list
+        url: https://example.com/google.list
+
+    remove:
+      # 按 key 删除 ── 以下两种格式均可
+      # 格式 1：数组
+      - DeprecatedProvider
+      - OldService
+      # 格式 2：对象（取消注释即可使用）
+      # DeprecatedProvider: ~
+      # OldService: ~
+
+  # ============================================================
+  # 2. proxy-providers — 代理集提供者（对象类型）
+  # ============================================================
+  # 行为与 rule-providers 完全一致
+  # ============================================================
+  proxy-providers:
+
+    prepend:
+      AutoProxy:
+        type: http
+        interval: 86400
+        path: ./proxy-providers/AutoProxy.yaml
+        url: https://example.com/auto-proxy.yaml
+        health-check:
+          enable: true
+          url: https://www.gstatic.com/generate_204
+          interval: 300
+
+    replace:
+      ManualProxy:
+        type: http
+        interval: 43200
+        path: ./proxy-providers/ManualProxy.yaml
+        url: https://example.com/manual-proxy.yaml
+
+    remove:
+      - ObsoleteProvider
+
+  # ============================================================
+  # 3. proxy-groups — 策略组（对象数组类型）
+  # ============================================================
+  # 唯一标识：item.name
+  # prepend：插入到现有策略组之前
+  # append：追加到现有策略组之后
+  # replace：按 name 匹配替换，不存在则追加
+  # remove：按 name 删除
+  # ============================================================
+  proxy-groups:
+
+    prepend:
+      # 插入到最前面
+      - name: AI
+        type: select
+        proxies:
+          - 美国自动
+          - 日本自动
+          - 新加坡自动
+          - DIRECT
+
+      - name: Steam
+        type: select
+        proxies:
+          - 美国自动
+          - 日本自动
+          - DIRECT
+
+    append:
+      # 追加到最后面
+      - name: 漏网之鱼
+        type: select
+        proxies:
+          - DIRECT
+          - 美国自动
+          - 日本自动
+          - 新加坡自动
+
+    replace:
+      # 替换或新增
+      # 如果已存在名为"全球直连"的策略组，则替换；否则追加
+      - name: 全球直连
+        type: select
+        proxies:
+          - DIRECT
+          - 美国自动
+
+    remove:
+      # 按 name 删除 ── 以下两种格式均可
+      # 格式 1：字符串数组
+      - 旧策略组
+      - DeprecatedGroup
+      # 格式 2：对象数组
+      # - { name: "旧策略组" }
+      # - { name: "DeprecatedGroup" }
+
+  # ============================================================
+  # 4. proxies — 代理节点（对象数组类型）
+  # ============================================================
+  # 行为与 proxy-groups 完全一致
+  # ============================================================
+  proxies:
+
+    prepend:
+      - name: 自定义节点-01
+        type: ss
+        server: example.com
+        port: 443
+        cipher: chacha20-ietf-poly1305
+        password: "your-password"
+        udp: true
+
+      - name: 自定义节点-02
+        type: vmess
+        server: example.com
+        port: 443
+        uuid: "your-uuid"
+        alterId: 0
+        cipher: auto
+        tls: true
+        network: ws
+        ws-path: /
+        ws-headers:
+          Host: example.com
+
+    append:
+      - name: 自定义节点-03
+        type: trojan
+        server: example.com
+        port: 443
+        password: "your-password"
+        udp: true
+        sni: example.com
+
+    replace:
+      - name: 自定义节点-01
+        type: ss
+        server: new-server.example.com
+        port: 8443
+        cipher: chacha20-ietf-poly1305
+        password: "new-password"
+        udp: true
+
+    remove:
+      - DeprecatedNode
+
+  # ============================================================
+  # 5. rules — 规则列表（字符串数组类型）
+  # ============================================================
+  # 唯一标识：字符串自身
+  # prepend：插入到最前面（字符串去重）
+  # append：追加到最后面（字符串去重）
+  # replace：使用 { old, new } 格式，按 old 匹配替换
+  # remove：按字符串精确匹配删除
+  # ============================================================
+  rules:
+
+    prepend:
+      - RULE-SET,AI,AI
+      - RULE-SET,Steam,Steam
+      - GEOIP,CN,DIRECT
+
+    append:
+      - DOMAIN-SUFFIX,example.com,DIRECT
+      - MATCH,漏网之鱼
+
+    replace:
+      # 精确匹配 "DOMAIN-SUFFIX,google.com,Proxy" 并替换为新规则
+      - old: "DOMAIN-SUFFIX,google.com,Proxy"
+        new: "DOMAIN-SUFFIX,google.com,DIRECT"
+      # 如果匹配不到，则追加 "DOMAIN-KEYWORD,openai,AI"
+      - old: "DOMAIN-KEYWORD,old-ai,Proxy"
+        new: "DOMAIN-KEYWORD,openai,AI"
+
+    remove:
+      - DOMAIN-SUFFIX,obsolete-service.com,Proxy
+      - IP-CIDR,192.168.0.0/16,DIRECT
+
+# ---- 注意：extensions 字段会在脚本处理后自动删除 ----
+# 以下配置仅为占位，实际使用时应是完整的 Clash 配置
+# rule-providers、proxy-providers、proxy-groups、proxies、rules
+# 等字段由最终的 YAML 提供，此处省略

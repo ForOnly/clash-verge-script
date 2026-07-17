@@ -1,0 +1,16 @@
+db.sqlite3
+*.pyc
+*.swp
+tmp/
+dump.rdb
+.vscode
+.vendor/
+.venv
+.pytest_cache/
+.qiniu_pythonsdk_hostscache.json
+.idea
+facade/conf/facade_local_conf.py
+/venv
+.DS_Store
+.run/
+.flake8
